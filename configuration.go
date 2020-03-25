@@ -32,14 +32,13 @@ type (
 	   microservice
 	*/
 	MicroServiceConfig struct {
-		Port             int  `mapstructure:"port"`
-		IsHTTPS          bool `mapstructure:"isHTTPS"`
-		IsCompressed     bool `mapstructure:"isCompressed"`
-		IsEnabled        bool `mapstructure:"isEnabled"`
-		RequestTimeoutMs int  `mapstructure:"requestTimeOutMs"`
-		ReloadConfig chan int // we always want a way to singal a reload
+		Port             int      `mapstructure:"port"`
+		IsHTTPS          bool     `mapstructure:"isHTTPS"`
+		IsCompressed     bool     `mapstructure:"isCompressed"`
+		IsEnabled        bool     `mapstructure:"isEnabled"`
+		RequestTimeoutMs int      `mapstructure:"requestTimeOutMs"`
+		ReloadConfig     chan int // we always want a way to singal a reload
 	}
-
 )
 
 /*
@@ -47,9 +46,9 @@ type (
 
 */
 type config struct {
-	Db           DatabaseConfig `mapstructure:"database"`
-	ExternalMS	MicroServiceConfig  `mapstructure:"external-ms"`
-	InternalMS	MicroServiceConfig  `mapstructure:"internal-ms"`
+	Db           DatabaseConfig     `mapstructure:"database"`
+	ExternalMS   MicroServiceConfig `mapstructure:"external-ms"`
+	InternalMS   MicroServiceConfig `mapstructure:"internal-ms"`
 	ReloadConfig chan int
 }
 

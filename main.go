@@ -239,7 +239,7 @@ func handleRequests(dbgorm *DB) {
 	// Lets fire up the internal first
 	go func() {
 		if Properties.InternalMS.IsHTTPS {
-			internal.Logger.Fatal(ext.StartTLS(fmt.Sprintf(":%d", Properties.InternalMS.Port), "./server.crt","./server.key"))
+			internal.Logger.Fatal(internal.StartTLS(fmt.Sprintf(":%d", Properties.InternalMS.Port), "./server.crt","./server.key"))
 		} else {
 			internal.Logger.Fatal(internal.Start(fmt.Sprintf(":%d", Properties.InternalMS.Port)))
 		}
@@ -251,7 +251,7 @@ func handleRequests(dbgorm *DB) {
 		if Properties.ExternalMS.IsHTTPS {
 			ext.Logger.Fatal(ext.StartTLS(fmt.Sprintf(":%d", Properties.ExternalMS.Port), "./server.crt","./server.key"))
 		} else {
-			ext.Logger.Fatal(internal.Start(fmt.Sprintf(":%d", Properties.ExternalMS.Port)))
+			ext.Logger.Fatal(ext.Start(fmt.Sprintf(":%d", Properties.ExternalMS.Port)))
 		}
 		wg.Done()
 	}()
