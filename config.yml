@@ -8,21 +8,17 @@
 database:
   dialect: mysql
   port: 3306
-  #host:  159.89.128.223
-  #host:  local-scaha-db
   host:  192.168.0.15
-  #host: localhost
-  #host:  scaha.com
   dbname: scaha
   sslMode: disable
-  #user: scaha
   user: root
-  #  password: cat9tail
-  # password: !2448Shiloh2448
   password: shiloh24
-  #poolsize: 5
-  #heartbeatsec: 5
-  #busysleepms: 10
-  #busyretrycount: 10
   isEnabled: true
-  #dsnParms: parseTime=true
+
+external-ms:
+  isHTTPS: true
+  port: 4050
+
+internal-ms:
+  isHTTPS: false
+  port: 4040
