@@ -1,8 +1,8 @@
 package main
 
 import (
+	m "github.com/davidbigelow25/scaha-entity-model"
 	"github.com/jinzhu/gorm"
-	m "scaha-entity-model"
 )
 
 type DAO struct {
