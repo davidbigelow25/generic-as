@@ -3,12 +3,15 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	m "github.com/davidbigelow25/scaha-entity-model"
 	"github.com/dgrijalva/jwt-go"
-	. "github.com/jinzhu/gorm"
+	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	log "github.com/sirupsen/logrus"
+
 	"net/http"
 	"os"
 	"sync"
@@ -16,21 +19,6 @@ import (
 )
 
 var jwtKey = []byte("my_secret_key")
-
-// Create a struct that models the structure of a user, both in the request body, and in the DB
-type Credentials struct {
-	Password string `json:"password"`
-	Username string `json:"username"`
-}
-
-// This is custom claims to truck our username
-type Claims struct {
-	UserName string `json:"username"`
-	UserId  uint
-	ProfileId uint
-	Roles map[string]bool  `json:"roles"`
-	jwt.StandardClaims
-}
 
 //
 // This handles all the sign in.
@@ -47,12 +35,12 @@ func signin(dao DAO) func(echo.Context) error {
 			Expires: time.Now().Add(-1 * time.Minute),
 		})
 
-		var creds Credentials
+		var creds m.Credentials
 		// Get the JSON body and decode into credentials
 		err := json.NewDecoder(c.Request().Body).Decode(&creds)
 		if err != nil {
 			// If the structure of the body is wrong, return an HTTP error
-			return c.String(http.StatusBadRequest, "Bad Request")
+			return c.String(http.StatusBadRequest, "Bad Request: Cannot Decipher your payload")
 		}
 
 		profile, ok := dao.FindProfile(creds.Username, creds.Password)
@@ -68,7 +56,7 @@ func signin(dao DAO) func(echo.Context) error {
 		// here, we have kept it as 5 minutes
 		expirationTime := time.Now().Add(5 * time.Minute)
 		// Create the JWT claims, which includes the username and expiry time
-		claims := &Claims{
+		claims := &m.Claims{
 			UserName: profile.UserCode,
 			ProfileId: profile.ID,
 			UserId:  profile.Person.ID,
@@ -134,7 +122,7 @@ func  validatetoken(dao DAO) echo.MiddlewareFunc {
 			tknStr := cook.Value
 
 			// Initialize a new instance of `Claims`
-			claims := &Claims{}
+			claims := &m.Claims{}
 
 			// Parse the JWT string and store the result in `claims`.
 			// Note that we are passing the key in this method as well. This method will return an error
@@ -185,14 +173,14 @@ func  validatetoken(dao DAO) echo.MiddlewareFunc {
 
 func GeneratePayload(c echo.Context) error {
 	user := c.Get("user").(*jwt.Token)
-	claims := user.Claims.(*Claims)
+	claims := user.Claims.(*m.Claims)
 	return c.JSON(http.StatusOK, claims)
 }
 
 //
 // Lets handle these bad boys
 //
-func handleRequests(dbgorm *DB) {
+func handleRequests(dbgorm *gorm.DB) {
 
 	//
 	// lets instantiate some simple things here
@@ -224,7 +212,7 @@ func handleRequests(dbgorm *DB) {
 	v := internal.Group("/validate")
 	// Configure middleware with the custom claims type
 	config := middleware.JWTConfig{
-		Claims:     &Claims{},
+		Claims:     &m.Claims{},
 		SigningKey: []byte("my_secret_key"),
 		TokenLookup: "cookie:jwt",
 	}
@@ -239,7 +227,7 @@ func handleRequests(dbgorm *DB) {
 	// Lets fire up the internal first
 	go func() {
 		if Properties.InternalMS.IsHTTPS {
-			internal.Logger.Fatal(internal.StartTLS(fmt.Sprintf(":%d", Properties.InternalMS.Port), "./server.crt","./server.key"))
+			internal.Logger.Fatal(internal.StartTLS(fmt.Sprintf(":%d", Properties.InternalMS.Port), "./keys/server.crt","./keys/server.key"))
 		} else {
 			internal.Logger.Fatal(internal.Start(fmt.Sprintf(":%d", Properties.InternalMS.Port)))
 		}
@@ -249,7 +237,7 @@ func handleRequests(dbgorm *DB) {
 	// Lets fire up the external now
 	go func() {
 		if Properties.ExternalMS.IsHTTPS {
-			ext.Logger.Fatal(ext.StartTLS(fmt.Sprintf(":%d", Properties.ExternalMS.Port), "./server.crt","./server.key"))
+			ext.Logger.Fatal(ext.StartTLS(fmt.Sprintf(":%d", Properties.ExternalMS.Port), "./keys/server.crt","./keys/server.key"))
 		} else {
 			ext.Logger.Fatal(ext.Start(fmt.Sprintf(":%d", Properties.ExternalMS.Port)))
 		}
@@ -276,7 +264,7 @@ func init() {
 func main() {
 
 	connectionString := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8%sparseTime=true", Properties.Db.User, Properties.Db.Pass, Properties.Db.Host, Properties.Db.Port, Properties.Db.Dbname, "&")
-	db, err := Open(Properties.Db.Dialect, connectionString)
+	db, err := gorm.Open(Properties.Db.Dialect, connectionString)
 	if err != nil {
 		log.Error(err.Error())
 		log.Panic("failed to connect database")
